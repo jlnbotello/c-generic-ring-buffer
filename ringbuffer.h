@@ -68,11 +68,19 @@
 #ifndef _ringbuffer_h
 #define _ringbuffer_h
 
+#ifndef false
+#define false	0
+#endif
+#ifndef true
+#define true	1
+#endif
+
 #define ringBuffer_typedef(T, NAME) \
   typedef struct { \
     int size; \
     int start; \
     int end; \
+	int full; \
     T* elems; \
   } NAME
 
@@ -80,24 +88,38 @@
   BUF.size = S; \
   BUF.start = 0; \
   BUF.end = 0; \
+  BUF.full = false; \
   BUF.elems = (T*)calloc(BUF.size, sizeof(T))
+  
+#define bufferStaticInit(BUF,S,T,PTR) \
+  BUF.size = S; \
+  BUF.start = 0; \
+  BUF.end = 0; \
+  BUF.full = false; \
+  BUF.elems = PTR
+
+  
 
 
 #define bufferDestroy(BUF) free(BUF->elems)
-#define nextStartIndex(BUF) ((BUF->start + 1) % (BUF->size + 1))
-#define nextEndIndex(BUF) ((BUF->end + 1) % (BUF->size + 1))
-#define isBufferEmpty(BUF) (BUF->end == BUF->start)
-#define isBufferFull(BUF) (nextEndIndex(BUF) == BUF->start)
+#define nextStartIndex(BUF) ((BUF->start + 1) % (BUF->size))
+#define nextEndIndex(BUF) ((BUF->end + 1) % (BUF->size))
+#define isBufferEmpty(BUF) (BUF->end == BUF->start && !BUF->full)
+#define isBufferFull(BUF) (BUF->full)
 
 #define bufferWrite(BUF, ELEM) \
-  BUF->elems[BUF->end] = ELEM; \
-  BUF->end = (BUF->end + 1) % (BUF->size + 1); \
-  if (isBufferEmpty(BUF)) { \
-    BUF->start = nextStartIndex(BUF); \
-  }
+	if (!isBufferFull(BUF)){ \
+		BUF->elems[BUF->end] = ELEM; \
+		BUF->end = nextEndIndex(BUF); \
+		if (BUF->end == BUF->start){ \
+			BUF->full = true; \
+		} \
+	}
 
 #define bufferRead(BUF, ELEM) \
-    ELEM = BUF->elems[BUF->start]; \
-    BUF->start = nextStartIndex(BUF);
-
+    if (!(isBufferEmpty(BUF))) { \
+		ELEM = BUF->elems[BUF->start]; \
+		BUF->start = nextStartIndex(BUF); \
+		BUF->full = false; \
+	}
 #endif

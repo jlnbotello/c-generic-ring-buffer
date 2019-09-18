@@ -53,24 +53,27 @@ void passByReference(intBuffer* myBuffer_ptr) {
 
   bufferWrite(myBuffer_ptr,42);
   bufferWrite(myBuffer_ptr,43);
-  bufferWrite(myBuffer_ptr,44); // test wrap around -- this should overwrite 42
-
+  bufferWrite(myBuffer_ptr,44); // 42 should not be overwrite
   int third;
   bufferRead(myBuffer_ptr,third);
-  assert(third == 43);
+  assert(third == 42);
 
   int fourth;
   bufferRead(myBuffer_ptr,fourth);
-  assert(fourth == 44);
+  assert(fourth == 43);
 
 }
+#define BUFFER_SIZE 2
 
 int main() {
   // Declare vars.
   intBuffer myBuffer;
   intBuffer* myBuffer_ptr;
+  
+  int data[BUFFER_SIZE]; //static allocated
 
-  bufferInit(myBuffer,2,int);
+  //bufferInit(myBuffer,BUFFER_SIZE,int);
+	bufferStaticInit(myBuffer, BUFFER_SIZE, int, data);
 
   // We must have the pointer. All of the macros deal with the pointer. (except
   // for init.
